@@ -90,7 +90,7 @@
               <td class="tbl-td text-right">
                 <div class="flex items-center justify-end gap-1.5">
                   <button v-if="u.role !== 'admin' || isFirstAdmin"
-                    @click="openModal(u)" class="btn-icon" title="Tahrirlash">
+                    @click="openModal(u)" class="btn-icon btn-icon--warning" title="Tahrirlash">
                     <AppIcon name="edit" :size="17" />
                   </button>
                   <button v-if="u.role !== 'admin' || isFirstAdmin"
@@ -177,12 +177,17 @@
               <div>
                 <label class="label">Rol *</label>
                 <div class="relative">
-                  <select v-model="modalForm.role" class="input pr-8" required>
+                  <select v-model="modalForm.role" class="input pr-8" required
+                    :disabled="editingUser && editingUser.id === firstAdminId">
                     <option value="">Tanlang</option>
                     <option v-for="r in ROLES" :key="r.value" :value="r.value">{{ r.label }}</option>
                   </select>
                   <AppIcon name="expand_more" :size="17" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
                 </div>
+                <p v-if="editingUser && editingUser.id === firstAdminId"
+                  class="text-[11px] mt-1" style="color:#D97706;">
+                  Birinchi administrator roli o'zgartirib bo'lmaydi
+                </p>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -225,6 +230,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import AppIcon from '@/components/AppIcon.vue'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const usersStore  = useUsersStore()
 const authStore   = useAuthStore()
@@ -242,7 +250,7 @@ const saving      = ref(false)
 const modalError  = ref('')
 
 const ROLES = [
-  { value: 'admin',    label: 'Administrator' }, { value: 'manager',   label: 'Menejer' },
+  { value: 'admin',    label: 'Administrator' },
   { value: 'brigadir', label: 'Brigadir' },       { value: 'nachalnik', label: 'Nachalnik' },
   { value: 'operator', label: 'Stanok operatori'},{ value: 'cutter',    label: 'Kesuvchi' },
   { value: 'driller',  label: 'Teshuvchi' },      { value: 'driver',    label: 'Haydovchi' },
@@ -251,7 +259,7 @@ const ROLES = [
 const ROLE_LABELS = Object.fromEntries(ROLES.map(r => [r.value, r.label]))
 
 const ROLE_COLORS = {
-  admin: '#1F52E8', director: '#7C3AED', manager: '#0891B2',
+  admin: '#1F52E8', director: '#7C3AED',
   brigadir: '#D97706', nachalnik: '#059669', operator: '#366EF9',
   cutter: '#EA580C', driller: '#8B5CF6', driver: '#6B7280',
 }
@@ -261,7 +269,6 @@ function getRoleBadgeStyle(role) {
   const map = {
     admin:    'background:#EFF4FF;border:1px solid #C4D8FD;color:#1234A8;',
     director: 'background:#F5F3FF;border:1px solid #DDD6FE;color:#5B21B6;',
-    manager:  'background:#ECFEFF;border:1px solid #A5F3FC;color:#155E75;',
     brigadir: 'background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;',
     nachalnik:'background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;',
     operator: 'background:#EFF4FF;border:1px solid #C4D8FD;color:#1234A8;',
@@ -300,6 +307,7 @@ async function saveUser() {
       ? await usersStore.updateUser(editingUser.value.id, data)
       : await usersStore.createUser(data)
     showModal.value = false
+    toast.success(editingUser.value ? "Foydalanuvchi yangilandi" : "Foydalanuvchi yaratildi")
   } catch (e) {
     modalError.value = e.response?.data?.detail || 'Xatolik yuz berdi'
   } finally {
@@ -309,6 +317,7 @@ async function saveUser() {
 
 async function toggleActive(user) {
   await usersStore.updateUser(user.id, { is_active: !user.is_active })
+  toast.success(user.is_active ? "Foydalanuvchi o'chirildi" : "Foydalanuvchi faollashtirildi")
 }
 
 const deleteUserTarget = ref(null)
@@ -321,8 +330,10 @@ async function doDeleteUser() {
   try {
     await usersStore.deleteUser(deleteUserTarget.value.id)
     deleteUserTarget.value = null
+    toast.success("Foydalanuvchi o'chirildi")
   } catch (e) {
     deleteUserError.value = e.response?.data?.detail || 'Xatolik yuz berdi'
+    toast.error(deleteUserError.value)
   } finally { deletingUser.value = false }
 }
 

@@ -125,7 +125,7 @@
                   </div>
                 </div>
               </td>
-              <td class="tbl-td"><StatusBadge :status="o.status" /></td>
+              <td class="tbl-td"><StatusBadge :status="o.active_stage_status || o.status" /></td>
               <td class="tbl-td">
                 <div v-if="o.deadline" class="flex items-center gap-1.5">
                   <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -143,6 +143,9 @@
                   <RouterLink :to="`/orders/${o.id}`" class="btn-icon" title="Ko'rish">
                     <AppIcon name="open_in_new" :size="17" />
                   </RouterLink>
+                  <button @click="openEditFor(o)" class="btn-icon btn-icon--warning" title="Tahrirlash">
+                    <AppIcon name="edit" :size="17" />
+                  </button>
                   <button v-if="['new','cancelled'].includes(o.status)"
                     @click.prevent="confirmDelete(o)"
                     class="btn-icon border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
@@ -155,6 +158,131 @@
           </tbody>
         </table>
       </div>
+
+    <!-- Edit Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showEditModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 sidebar-backdrop"
+          @click.self="showEditModal = false">
+          <div class="card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="icon-box w-10 h-10 icon-box-amber">
+                <AppIcon name="edit" :size="20" />
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-ink text-[16px]">Buyurtmani tahrirlash</h3>
+                <p class="text-ink-4 text-[12px]">{{ editTarget?.order_no }}</p>
+              </div>
+              <button @click="showEditModal = false" class="btn-icon ml-auto">
+                <AppIcon name="close" :size="17" />
+              </button>
+            </div>
+
+            <div class="space-y-5">
+              <div>
+                <label class="label">Yetkazib berish muddati</label>
+                <div class="relative">
+                  <AppIcon name="calendar_month" :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
+                  <input v-model="editForm.deadline" type="date" class="input pl-9" />
+                </div>
+              </div>
+
+              <div>
+                <label class="label">Mebel turi *</label>
+                <div class="grid grid-cols-4 gap-2">
+                  <button v-for="t in FURNITURE_TYPES" :key="t" type="button"
+                    @click="editForm.furniture_type = t"
+                    class="py-2 px-3 rounded-lg border text-[13px] font-medium transition-all"
+                    :class="editForm.furniture_type === t
+                      ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
+                      : 'bg-white border-[#E8ECF4] text-ink-3 hover:border-brand-300 hover:text-brand-500'">
+                    {{ t }}
+                  </button>
+                </div>
+                <input v-if="!FURNITURE_TYPES.includes(editForm.furniture_type)"
+                  v-model="editForm.furniture_type" class="input mt-2" placeholder="Mebel turini kiriting..." />
+              </div>
+
+              <div>
+                <label class="label">O'lchamlar (mm) *</label>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <div class="relative">
+                      <input v-model.number="editForm.height_mm" class="input pr-10 text-center" type="number" min="1" placeholder="0" />
+                      <span class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 text-[11px] font-semibold pointer-events-none">mm</span>
+                    </div>
+                    <p class="text-center text-[11px] text-ink-4 mt-1">Bo'yi</p>
+                  </div>
+                  <div>
+                    <div class="relative">
+                      <input v-model.number="editForm.width_mm" class="input pr-10 text-center" type="number" min="1" placeholder="0" />
+                      <span class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 text-[11px] font-semibold pointer-events-none">mm</span>
+                    </div>
+                    <p class="text-center text-[11px] text-ink-4 mt-1">Eni</p>
+                  </div>
+                  <div>
+                    <div class="relative">
+                      <input v-model.number="editForm.depth_mm" class="input pr-10 text-center" type="number" min="1" placeholder="0" />
+                      <span class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 text-[11px] font-semibold pointer-events-none">mm</span>
+                    </div>
+                    <p class="text-center text-[11px] text-ink-4 mt-1">Chuqurligi</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="label">Material *</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button v-for="m in MATERIALS" :key="m" type="button"
+                    @click="editForm.material = m"
+                    class="py-1.5 px-2 rounded-lg border text-[12px] font-medium transition-all"
+                    :class="editForm.material === m
+                      ? 'bg-brand-500 border-brand-500 text-white'
+                      : 'bg-white border-[#E8ECF4] text-ink-3 hover:border-brand-300 hover:text-brand-500'">
+                    {{ m }}
+                  </button>
+                </div>
+                <input v-if="!MATERIALS.includes(editForm.material)"
+                  v-model="editForm.material" class="input mt-2" placeholder="Material nomini kiriting..." />
+              </div>
+
+              <div>
+                <label class="label">Rang</label>
+                <input v-model="editForm.color" class="input" placeholder="Oq, Qo'ng'ir..." />
+              </div>
+
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="label">Teshish joylari</label>
+                  <textarea v-model="editForm.holes" class="input" rows="2" placeholder="Teshish joylari tavsifi..." />
+                </div>
+                <div>
+                  <label class="label">Kesish tafsilotlari</label>
+                  <textarea v-model="editForm.cuts" class="input" rows="2" placeholder="Qo'shimcha kesish o'lchamlari..." />
+                </div>
+                <div>
+                  <label class="label">Izoh</label>
+                  <textarea v-model="editForm.notes" class="input" rows="2" placeholder="Qo'shimcha izoh..." />
+                </div>
+              </div>
+
+              <div v-if="editError" class="p-3 rounded-lg text-[12px]"
+                style="background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;">{{ editError }}</div>
+            </div>
+
+            <div class="flex gap-2.5 justify-end mt-6 pt-4 border-t border-[#E8ECF4]">
+              <button class="btn-secondary" @click="showEditModal = false">Bekor</button>
+              <button class="btn-primary" @click="saveEdit" :disabled="editSaving">
+                <AppIcon v-if="editSaving" name="progress_activity" :size="16" class="animate-spin" />
+                <AppIcon v-else name="save" :size="16" />
+                {{ editSaving ? 'Saqlanmoqda...' : 'Saqlash' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Delete confirm modal -->
     <Teleport to="body">
@@ -210,10 +338,73 @@ import { RouterLink } from 'vue-router'
 import { useOrdersStore } from '@/stores/orders'
 import StatusBadge from '@/components/StatusBadge.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const ordersStore  = useOrdersStore()
 const deleteTarget = ref(null)
 const deleting     = ref(false)
+
+// Edit modal
+const showEditModal = ref(false)
+const editTarget    = ref(null)
+const editSaving    = ref(false)
+const editError     = ref('')
+const FURNITURE_TYPES = ['Shkaf', 'Stol', 'Stul', 'Divan', 'Krovat', 'Javon', 'Tokcha', 'Boshqa']
+const MATERIALS       = ['DSP', 'MDF', 'Faner', 'Metall', 'Shisha', 'Kompozit', 'Boshqa']
+const editForm = reactive({
+  deadline: '', furniture_type: '',
+  height_mm: null, width_mm: null, depth_mm: null,
+  material: '', color: '', holes: '', cuts: '', notes: '',
+})
+
+async function openEditFor(order) {
+  const res = await ordersStore.fetchOrderQuiet(order.id)
+  const o   = res || order
+  editTarget.value        = o
+  editForm.deadline       = o.deadline || ''
+  editForm.furniture_type = o.detail?.furniture_type || ''
+  editForm.height_mm      = o.detail?.height_mm || null
+  editForm.width_mm       = o.detail?.width_mm  || null
+  editForm.depth_mm       = o.detail?.depth_mm  || null
+  editForm.material       = o.detail?.material  || ''
+  editForm.color          = o.detail?.color     || ''
+  editForm.holes          = o.detail?.holes     || ''
+  editForm.cuts           = o.detail?.cuts      || ''
+  editForm.notes          = o.detail?.notes     || ''
+  editError.value = ''
+  showEditModal.value = true
+}
+
+async function saveEdit() {
+  editError.value = ''
+  if (!editForm.furniture_type.trim()) { editError.value = 'Mebel turini kiriting'; return }
+  if (!editForm.height_mm || !editForm.width_mm || !editForm.depth_mm) { editError.value = "O'lchamlarni kiriting"; return }
+  if (!editForm.material.trim()) { editError.value = 'Materialni kiriting'; return }
+  editSaving.value = true
+  try {
+    await ordersStore.updateOrder(editTarget.value.id, {
+      deadline:       editForm.deadline || null,
+      furniture_type: editForm.furniture_type,
+      height_mm:      editForm.height_mm,
+      width_mm:       editForm.width_mm,
+      depth_mm:       editForm.depth_mm,
+      material:       editForm.material,
+      color:          editForm.color  || null,
+      holes:          editForm.holes  || null,
+      cuts:           editForm.cuts   || null,
+      notes:          editForm.notes  || null,
+    })
+    showEditModal.value = false
+    fetchData()
+    toast.success("Buyurtma yangilandi")
+  } catch (e) {
+    editError.value = e.response?.data?.detail || 'Xatolik yuz berdi'
+  } finally {
+    editSaving.value = false
+  }
+}
 
 function confirmDelete(order) { deleteTarget.value = order }
 async function doDelete() {
@@ -221,8 +412,10 @@ async function doDelete() {
   try {
     await ordersStore.deleteOrder(deleteTarget.value.id)
     deleteTarget.value = null
-  } catch (e) { alert(e.response?.data?.detail || 'Xatolik') }
-  finally { deleting.value = false }
+    toast.success("Buyurtma o'chirildi")
+  } catch (e) {
+    toast.error(e.response?.data?.detail || "Xatolik yuz berdi")
+  } finally { deleting.value = false }
 }
 const filters     = reactive({ search: '', status: '', from_date: '', to_date: '' })
 const hasFilters  = computed(() => Object.values(filters).some(v => v))
@@ -232,7 +425,7 @@ const STATUSES = [
   { value: 'cutting',       label: 'Kesishda' },
   { value: 'drilling',      label: 'Teshishda' },
   { value: 'assembling',    label: "Yig'ishda" },
-  { value: 'quality_check', label: 'Sifat nazorati' },
+  { value: 'pending_nachalnik', label: 'Nachalnik tasdiqida' },
   { value: 'ready',         label: 'Tayyor' },
   { value: 'delivered',     label: 'Yetkazildi' },
   { value: 'cancelled',     label: 'Bekor' },

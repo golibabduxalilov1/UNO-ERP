@@ -9,7 +9,7 @@ from app.core.deps import require_roles, verify_internal_key
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
-STAFF_ROLES = [UserRole.admin, UserRole.manager, UserRole.nachalnik, UserRole.director]
+STAFF_ROLES = [UserRole.admin, UserRole.nachalnik, UserRole.director]
 
 
 @router.get("", response_model=List[ClientOut])
@@ -30,7 +30,7 @@ def list_clients(
 def create_client(
     data: ClientCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles([UserRole.admin, UserRole.manager])),
+    _: User = Depends(require_roles([UserRole.admin])),
 ):
     existing = db.query(Client).filter(Client.phone == data.phone).first()
     if existing:
@@ -59,7 +59,7 @@ def update_client(
     client_id: int,
     data: ClientUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles([UserRole.admin, UserRole.manager])),
+    _: User = Depends(require_roles([UserRole.admin])),
 ):
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
@@ -75,7 +75,7 @@ def update_client(
 def delete_client(
     client_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles([UserRole.admin, UserRole.manager])),
+    _: User = Depends(require_roles([UserRole.admin])),
 ):
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:

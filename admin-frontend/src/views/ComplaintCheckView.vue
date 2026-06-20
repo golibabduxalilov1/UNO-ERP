@@ -152,7 +152,7 @@ const result  = ref(null)
 const loading = ref(false)
 const error   = ref('')
 
-const STAGE_LABELS = { cutting:'Kesish', drilling:'Teshish', assembling:"Yig'ish/Montaj", quality_check:'Sifat nazorati' }
+const STAGE_LABELS = { cutting:'Kesish', drilling:'Teshish', assembling:"Yig'ish/Montaj" }
 
 async function search() {
   if (!orderNo.value.trim()) return

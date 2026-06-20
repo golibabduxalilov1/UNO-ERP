@@ -74,6 +74,6 @@ def deliver_order(
 @router.get("", response_model=List[DeliveryOut])
 def list_deliveries(
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles([UserRole.admin, UserRole.manager, UserRole.nachalnik, UserRole.director])),
+    _: User = Depends(require_roles([UserRole.admin, UserRole.nachalnik, UserRole.director])),
 ):
     return db.query(Delivery).order_by(Delivery.delivered_at.desc()).limit(100).all()

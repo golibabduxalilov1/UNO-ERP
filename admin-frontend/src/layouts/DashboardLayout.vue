@@ -100,12 +100,7 @@
         </div>
 
         <div class="ml-auto flex items-center gap-2">
-          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-mono text-ink-3 border border-[#E8ECF4] bg-[#FAFBFC]">
-            <AppIcon name="schedule" :size="14" class="text-brand-500" />
-            {{ currentTime }}
-          </div>
-
-          <button @click="handleLogout" class="btn-secondary py-1.5 px-3 text-[12px]">
+<button @click="handleLogout" class="btn-secondary py-1.5 px-3 text-[12px]">
             <AppIcon name="logout" :size="16" />
             <span class="hidden sm:inline">Chiqish</span>
           </button>
@@ -136,7 +131,6 @@ const authStore   = useAuthStore()
 const route       = useRoute()
 const router      = useRouter()
 const sidebarOpen = ref(false)
-const currentTime = ref('')
 
 const mainNav = [
   { path: '/',        icon: 'dashboard',    label: 'Dashboard' },
@@ -177,13 +171,7 @@ function handleLogout() {
   router.push('/login')
 }
 
-let timer = null
-function tick() {
-  currentTime.value = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-}
-
-onMounted(() => { authStore.fetchMe?.(); tick(); timer = setInterval(tick, 1000) })
-onUnmounted(() => clearInterval(timer))
+onMounted(() => { authStore.fetchMe?.() })
 </script>
 
 <style scoped>

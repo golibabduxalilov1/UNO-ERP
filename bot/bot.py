@@ -3,7 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import settings
-from handlers import start, operator, driver, brigadir, nachalnik, manager
+from handlers import start, operator, driver, brigadir, nachalnik
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -14,7 +14,6 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
 
     dp.include_router(start.router)
-    dp.include_router(manager.router)
     dp.include_router(brigadir.router)
     dp.include_router(nachalnik.router)
     dp.include_router(driver.router)

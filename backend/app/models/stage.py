@@ -9,13 +9,11 @@ class StageType(str, enum.Enum):
     cutting = "cutting"
     drilling = "drilling"
     assembling = "assembling"
-    quality_check = "quality_check"
 
 
 class StageStatus(str, enum.Enum):
     in_progress = "in_progress"
     pending_brigadir = "pending_brigadir"
-    pending_nachalnik = "pending_nachalnik"
     confirmed = "confirmed"
     rejected = "rejected"
 
@@ -35,11 +33,6 @@ class OrderStage(Base):
     brigadir_confirmed_at = Column(DateTime, nullable=True)
     brigadir_reject_reason = Column(Text, nullable=True)
 
-    nachalnik_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    nachalnik_confirmed_at = Column(DateTime, nullable=True)
-    nachalnik_reject_reason = Column(Text, nullable=True)
-
     order = relationship("Order", back_populates="stages")
     worker = relationship("User", foreign_keys=[user_id])
     brigadir = relationship("User", foreign_keys=[brigadir_id])
-    nachalnik = relationship("User", foreign_keys=[nachalnik_id])

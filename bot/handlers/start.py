@@ -5,14 +5,13 @@ import api_client
 from api_client import APIError
 from keyboards.main import (
     worker_main_kb, driver_main_kb, brigadir_main_kb,
-    nachalnik_main_kb, manager_main_kb
+    nachalnik_main_kb, admin_main_kb
 )
 
 router = Router()
 
 ROLE_LABELS = {
     "admin": "Administrator",
-    "manager": "Menejer",
     "brigadir": "Brigadir",
     "nachalnik": "Nachalnik",
     "operator": "Stanok operatori",
@@ -34,8 +33,8 @@ def get_keyboard_for_role(role: str):
         return brigadir_main_kb()
     if role == "nachalnik":
         return nachalnik_main_kb()
-    if role in ("admin", "manager", "director"):
-        return manager_main_kb()
+    if role in ("admin", "director"):
+        return admin_main_kb()
     return worker_main_kb()
 
 

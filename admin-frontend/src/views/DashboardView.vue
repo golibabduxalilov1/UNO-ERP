@@ -263,12 +263,12 @@ const statCards = computed(() => {
 
 const STATUS_LABELS = {
   new: 'Yangi', cutting: 'Kesishda', drilling: 'Teshishda',
-  assembling: "Yig'ishda", quality_check: 'Sifat nazorati',
+  assembling: "Yig'ishda", pending_nachalnik: 'Nachalnik tasdiqida',
   ready: 'Tayyor', delivered: 'Yetkazildi', cancelled: 'Bekor',
 }
 const STATUS_COLORS = {
   new: '#366EF9', cutting: '#F59E0B', drilling: '#F97316',
-  assembling: '#EAB308', quality_check: '#8B5CF6',
+  assembling: '#EAB308', pending_nachalnik: '#8B5CF6',
   ready: '#10B981', delivered: '#6B7280', cancelled: '#EF4444',
 }
 

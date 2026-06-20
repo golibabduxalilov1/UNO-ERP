@@ -50,6 +50,13 @@ export const useOrdersStore = defineStore('orders', () => {
     }
   }
 
+  async function fetchOrderQuiet(id) {
+    try {
+      const res = await ordersApi.get(id)
+      return res.data
+    } catch { return null }
+  }
+
   async function updateOrder(id, data) {
     try {
       const res = await ordersApi.update(id, data)
@@ -66,5 +73,5 @@ export const useOrdersStore = defineStore('orders', () => {
     } catch (e) { throw e }
   }
 
-  return { orders, currentOrder, loading, error, fetchOrders, fetchOrder, createOrder, updateOrder, deleteOrder }
+  return { orders, currentOrder, loading, error, fetchOrders, fetchOrder, fetchOrderQuiet, createOrder, updateOrder, deleteOrder }
 })

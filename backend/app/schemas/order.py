@@ -43,6 +43,15 @@ class OrderCreate(BaseModel):
 class OrderUpdate(BaseModel):
     status: Optional[OrderStatus] = None
     deadline: Optional[date] = None
+    furniture_type: Optional[str] = None
+    height_mm: Optional[int] = None
+    width_mm: Optional[int] = None
+    depth_mm: Optional[int] = None
+    material: Optional[str] = None
+    color: Optional[str] = None
+    holes: Optional[str] = None
+    cuts: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class StageOut(BaseModel):
@@ -56,12 +65,8 @@ class StageOut(BaseModel):
     brigadir_id: Optional[int]
     brigadir_confirmed_at: Optional[datetime]
     brigadir_reject_reason: Optional[str]
-    nachalnik_id: Optional[int]
-    nachalnik_confirmed_at: Optional[datetime]
-    nachalnik_reject_reason: Optional[str]
     worker: Optional[UserOut] = None
     brigadir: Optional[UserOut] = None
-    nachalnik: Optional[UserOut] = None
 
     class Config:
         from_attributes = True
@@ -89,6 +94,7 @@ class OrderListOut(BaseModel):
     id: int
     order_no: str
     status: OrderStatus
+    active_stage_status: Optional[str] = None
     deadline: Optional[date]
     created_at: datetime
     updated_at: datetime

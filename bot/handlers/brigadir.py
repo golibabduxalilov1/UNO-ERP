@@ -12,7 +12,6 @@ STAGE_LABELS = {
     "cutting": "Kesish",
     "drilling": "Teshish",
     "assembling": "Yig'ish/Montaj",
-    "quality_check": "Sifat nazorati",
 }
 
 
@@ -29,7 +28,21 @@ async def pending_list(message: Message):
             stage_label = STAGE_LABELS.get(s.get("stage", ""), s.get("stage", ""))
             duration = ""
             if s.get("started_at") and s.get("finished_at"):
-                duration = f"\nDavomiyligi: {s['started_at']} → {s['finished_at']}"
+                try:
+                    from datetime import datetime
+                    fmt = "%Y-%m-%dT%H:%M:%S.%f"
+                    t1 = datetime.fromisoformat(s["started_at"].replace("Z", ""))
+                    t2 = datetime.fromisoformat(s["finished_at"].replace("Z", ""))
+                    secs = int((t2 - t1).total_seconds())
+                    if secs < 60:
+                        dur_str = f"{secs} soniya"
+                    else:
+                        m, sec = divmod(secs, 60)
+                        dur_str = f"{m} daqiqa {sec} soniya" if sec else f"{m} daqiqa"
+                    started = t1.strftime("%H:%M")
+                    duration = f"\nBoshlangan: {started}\nDavomiyligi: {dur_str}"
+                except Exception:
+                    pass
             await message.answer(
                 f"🔔 <b>Tasdiq so'rovi #{s['id']}</b>\n"
                 f"Ishchi: {worker_name}\n"
@@ -48,17 +61,17 @@ async def cb_brigadir_confirm(callback: CallbackQuery):
     stage_id = int(callback.data.split(":")[1])
     tid = callback.from_user.id
     try:
-        await api_client.post(
+        result = await api_client.post(
             f"/stages/{stage_id}/brigadir-confirm",
             params={"telegram_id": tid},
         )
         await callback.message.edit_text(
-            f"✅ Bosqich #{stage_id} tasdiqlandi!\nNachalnikka yuborildi.",
+            f"✅ Bosqich #{stage_id} tasdiqlandi!\n{result.get('message', '')}",
             parse_mode="HTML",
         )
         await callback.answer("Tasdiqlandi!")
     except APIError as e:
-        await callback.answer(f"⚠️ {e}", show_alert=True)
+        await callback.answer("⚠️ Xatolik yuz berdi. Qaytadan urinib ko'ring.", show_alert=True)
 
 
 @router.callback_query(F.data.startswith("brigadir_reject:"))

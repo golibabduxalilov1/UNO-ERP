@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column('phone', sa.String(50), nullable=True),
         sa.Column('login', sa.String(100), nullable=True),
         sa.Column('hashed_password', sa.String(255), nullable=True),
-        sa.Column('role', sa.Enum('admin','manager','brigadir','nachalnik','operator','cutter','driller','driver','director', name='userrole'), nullable=False),
+        sa.Column('role', sa.Enum('admin','brigadir','nachalnik','operator','cutter','driller','driver','director', name='userrole'), nullable=False),
         sa.Column('is_active', sa.Boolean(), default=True),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
@@ -55,13 +55,16 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('order_no', sa.String(20), nullable=False),
         sa.Column('client_id', sa.Integer(), nullable=False),
-        sa.Column('status', sa.Enum('new','cutting','drilling','assembling','quality_check','ready','delivered','cancelled', name='orderstatus'), nullable=False),
+        sa.Column('status', sa.Enum('new','cutting','drilling','assembling','pending_nachalnik','ready','delivered','cancelled', name='orderstatus'), nullable=False),
         sa.Column('deadline', sa.Date(), nullable=True),
         sa.Column('created_by', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('updated_at', sa.DateTime(), nullable=True),
+        sa.Column('nachalnik_id', sa.Integer(), nullable=True),
+        sa.Column('nachalnik_confirmed_at', sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(['client_id'], ['clients.id']),
         sa.ForeignKeyConstraint(['created_by'], ['users.id']),
+        sa.ForeignKeyConstraint(['nachalnik_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('order_no'),
     )
@@ -97,27 +100,22 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('order_id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('stage', sa.Enum('cutting','drilling','assembling','quality_check', name='stagetype'), nullable=False),
+        sa.Column('stage', sa.Enum('cutting','drilling','assembling', name='stagetype'), nullable=False),
         sa.Column('started_at', sa.DateTime(), nullable=True),
         sa.Column('finished_at', sa.DateTime(), nullable=True),
-        sa.Column('status', sa.Enum('in_progress','pending_brigadir','pending_nachalnik','confirmed','rejected', name='stagestatus'), nullable=False),
+        sa.Column('status', sa.Enum('in_progress','pending_brigadir','confirmed','rejected', name='stagestatus'), nullable=False),
         sa.Column('brigadir_id', sa.Integer(), nullable=True),
         sa.Column('brigadir_confirmed_at', sa.DateTime(), nullable=True),
         sa.Column('brigadir_reject_reason', sa.Text(), nullable=True),
-        sa.Column('nachalnik_id', sa.Integer(), nullable=True),
-        sa.Column('nachalnik_confirmed_at', sa.DateTime(), nullable=True),
-        sa.Column('nachalnik_reject_reason', sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(['order_id'], ['orders.id']),
         sa.ForeignKeyConstraint(['user_id'], ['users.id']),
         sa.ForeignKeyConstraint(['brigadir_id'], ['users.id']),
-        sa.ForeignKeyConstraint(['nachalnik_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_index('ix_order_stages_id', 'order_stages', ['id'])
     op.create_index('ix_order_stages_order_id', 'order_stages', ['order_id'])
     op.create_index('ix_order_stages_user_id', 'order_stages', ['user_id'])
     op.create_index('ix_order_stages_brigadir_id', 'order_stages', ['brigadir_id'])
-    op.create_index('ix_order_stages_nachalnik_id', 'order_stages', ['nachalnik_id'])
 
     # Deliveries
     op.create_table(

@@ -1,8 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
-from keyboards.main import confirm_reject_kb, cancel_kb, nachalnik_main_kb
-from states import NachalnikRejectStates
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from keyboards.main import nachalnik_main_kb
 import api_client
 from api_client import APIError
 
@@ -12,89 +11,87 @@ STAGE_LABELS = {
     "cutting": "Kesish",
     "drilling": "Teshish",
     "assembling": "Yig'ish/Montaj",
-    "quality_check": "Sifat nazorati",
 }
 
 
-@router.message(F.text == "✅ Brigadir tasdiqlaganlari")
+def _fmt_dt(val: str | None) -> str:
+    if not val:
+        return "N/A"
+    try:
+        from datetime import datetime
+        dt = datetime.fromisoformat(val.replace("Z", ""))
+        return dt.strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return val
+
+
+def order_summary_text(o: dict) -> str:
+    lines = [
+        f"📦 <b>{o.get('order_no', '?')} — Yakuniy tasdiq</b>",
+        f"👤 Mijoz: {o.get('client_name', '?')}",
+        f"🪑 Mebel: <b>{o.get('furniture_type', '?')}</b>",
+        f"📐 O'lcham: <b>{o.get('height_mm')}×{o.get('width_mm')}×{o.get('depth_mm')} mm</b>",
+        f"🧱 Material: {o.get('material', '?')}",
+    ]
+    if o.get('color'):
+        lines.append(f"🎨 Rang: {o['color']}")
+    if o.get('notes'):
+        lines.append(f"📝 Izoh: {o['notes']}")
+    lines.append(f"📅 Muddat: {o.get('deadline') or 'Belgilanmagan'}")
+    lines.append("")
+    for s in (o.get("stages") or []):
+        label = STAGE_LABELS.get(s.get("stage", ""), s.get("stage", ""))
+        if s.get("status") != "confirmed":
+            continue
+        lines.append(
+            f"✅ <b>{label}</b>\n"
+            f"   Ishchi: {s.get('worker_name') or 'N/A'}\n"
+            f"   Boshlangan: {_fmt_dt(s.get('started_at'))}\n"
+            f"   Yakunlangan: {_fmt_dt(s.get('finished_at'))}\n"
+            f"   Brigadir: {s.get('brigadir_name') or 'N/A'} ({_fmt_dt(s.get('brigadir_confirmed_at'))})"
+        )
+    return "\n".join(lines)
+
+
+def nachalnik_confirm_kb(order_id: int):
+    builder = InlineKeyboardBuilder()
+    builder.button(text="✅ Tasdiqlash", callback_data=f"nachalnik_order_confirm:{order_id}")
+    return builder.as_markup()
+
+
+@router.message(F.text == "✅ Yakuniy tasdiq")
 async def pending_nachalnik(message: Message):
     tid = message.from_user.id
     try:
-        stages = await api_client.get("/stages/pending-nachalnik", params={"telegram_id": tid})
-        if not stages:
-            await message.answer("📭 Hozirda tasdiq kutayotgan ish yo'q.")
+        orders = await api_client.get("/orders/internal/pending-nachalnik", params={"telegram_id": tid})
+        if not orders:
+            await message.answer("📭 Hozirda tasdiq kutayotgan buyurtma yo'q.")
             return
-        for s in stages:
-            worker_name = s.get("worker", {}).get("full_name", "Noma'lum") if s.get("worker") else "Noma'lum"
-            brigadir_name = s.get("brigadir", {}).get("full_name", "Noma'lum") if s.get("brigadir") else "Noma'lum"
-            stage_label = STAGE_LABELS.get(s.get("stage", ""), s.get("stage", ""))
-            await message.answer(
-                f"🔔 <b>Nachalnik tasdiq #{s['id']}</b>\n"
-                f"Ishchi: {worker_name}\n"
-                f"Brigadir: {brigadir_name}\n"
-                f"Buyurtma: #{s['order_id']}\n"
-                f"Bosqich: {stage_label}\n"
-                f"Boshlangan: {s.get('started_at', 'N/A')}\n"
-                f"Yakunlangan: {s.get('finished_at', 'N/A')}",
-                reply_markup=confirm_reject_kb(s["id"], "nachalnik"),
-                parse_mode="HTML",
-            )
+        for o in orders:
+            text = order_summary_text(o)
+            kb = nachalnik_confirm_kb(o["order_id"])
+            await message.answer(text, reply_markup=kb, parse_mode="HTML")
     except APIError as e:
         await message.answer(f"⚠️ {e}")
 
 
-@router.callback_query(F.data.startswith("nachalnik_confirm:"))
-async def cb_nachalnik_confirm(callback: CallbackQuery):
-    stage_id = int(callback.data.split(":")[1])
+@router.callback_query(F.data.startswith("nachalnik_order_confirm:"))
+async def cb_nachalnik_order_confirm(callback: CallbackQuery):
+    order_id = int(callback.data.split(":")[1])
     tid = callback.from_user.id
     try:
-        await api_client.post(
-            f"/stages/{stage_id}/nachalnik-confirm",
+        result = await api_client.post(
+            f"/orders/internal/{order_id}/nachalnik-confirm",
             params={"telegram_id": tid},
         )
         await callback.message.edit_text(
-            f"✅ Bosqich #{stage_id} nachalnik tomonidan tasdiqlandi!",
+            f"✅ Buyurtma #{order_id} tasdiqlandi!\n"
+            f"Haydovchiga yuborildi.",
             parse_mode="HTML",
         )
         await callback.answer("Tasdiqlandi!")
     except APIError as e:
         await callback.answer(f"⚠️ {e}", show_alert=True)
-
-
-@router.callback_query(F.data.startswith("nachalnik_reject:"))
-async def cb_nachalnik_reject_start(callback: CallbackQuery, state: FSMContext):
-    stage_id = int(callback.data.split(":")[1])
-    await state.set_state(NachalnikRejectStates.waiting_reason)
-    await state.update_data(stage_id=stage_id)
-    await callback.message.answer(
-        f"❌ Rad etish sababini yozing (bosqich #{stage_id}):",
-        reply_markup=cancel_kb(),
-    )
-    await callback.answer()
-
-
-@router.message(NachalnikRejectStates.waiting_reason)
-async def nachalnik_reject_reason(message: Message, state: FSMContext):
-    if message.text == "❌ Bekor qilish":
-        await state.clear()
-        await message.answer("Bekor qilindi.", reply_markup=nachalnik_main_kb())
-        return
-    data = await state.get_data()
-    stage_id = data["stage_id"]
-    tid = message.from_user.id
-    try:
-        await api_client.post(
-            f"/stages/{stage_id}/nachalnik-reject",
-            json={"reject_reason": message.text},
-            params={"telegram_id": tid},
-        )
-        await state.clear()
-        await message.answer(
-            f"❌ Bosqich #{stage_id} rad etildi.\nSabab: {message.text}",
-            reply_markup=nachalnik_main_kb(),
-        )
-    except APIError as e:
-        await message.answer(f"⚠️ {e}")
 
 
 @router.message(F.text == "📊 Oylik hisobot")
@@ -103,7 +100,6 @@ async def monthly_report(message: Message):
     from datetime import datetime
     now = datetime.now()
     try:
-        user = await api_client.get(f"/users/by-telegram/{tid}")
         data = await api_client.get("/reports/monthly", params={"year": now.year, "month": now.month})
         if not data:
             await message.answer("📭 Bu oy uchun hisobot ma'lumotlari yo'q.")

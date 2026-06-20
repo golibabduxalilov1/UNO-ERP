@@ -237,8 +237,8 @@ const tabs = [
   { key: 'delayed', icon: 'alarm_on',  label: 'Kechikkanlar' },
 ]
 
-const ROLE_LABELS  = { admin:'Admin', manager:'Menejer', brigadir:'Brigadir', nachalnik:'Nachalnik', operator:'Operator', cutter:'Kesuvchi', driller:'Teshuvchi', driver:'Haydovchi', director:'Direktor' }
-const STAGE_LABELS = { cutting:'Kesish', drilling:'Teshish', assembling:"Yig'ish", quality_check:'Sifat nazorati' }
+const ROLE_LABELS  = { admin:'Admin', brigadir:'Brigadir', nachalnik:'Nachalnik', operator:'Operator', cutter:'Kesuvchi', driller:'Teshuvchi', driver:'Haydovchi', director:'Direktor' }
+const STAGE_LABELS = { cutting:'Kesish', drilling:'Teshish', assembling:"Yig'ish" }
 
 const maxCount = computed(() => Math.max(...reportsStore.monthly.map(w => w.total_count), 1))
 

@@ -44,8 +44,8 @@ def bot_create_order(
     _key: str = Depends(verify_internal_key),
 ):
     user = db.query(User).filter(User.telegram_id == data.telegram_id, User.is_active == True).first()
-    if not user or user.role not in [UserRole.admin, UserRole.manager]:
-        raise HTTPException(status_code=403, detail="Buyurtma faqat menejer/admin kirita oladi")
+    if not user or user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Buyurtma faqat admin kirita oladi")
     client = db.query(Client).filter(Client.id == data.client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Mijoz topilmadi")

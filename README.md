@@ -27,7 +27,6 @@ UNO/
 |---|---|
 | `admin` | To'liq huquq, tizim sozlamalari |
 | `director` | Umumiy nazorat, hisobotlar |
-| `manager` | Buyurtma kiritish va kuzatish |
 | `nachalnik` | Sex boshlig'i, bosqichlarni tasdiqlash |
 | `brigadir` | Guruh rahbari |
 | `operator` | Buyurtma holati yangilash |
@@ -40,8 +39,8 @@ UNO/
 ## Buyurtma bosqichlari
 
 ```
-new → cutting → drilling → assembling → quality_check → ready → delivered
-                                                               ↘ cancelled
+new → cutting → drilling → assembling → pending_nachalnik → ready → delivered
+                                                                    ↘ cancelled
 ```
 
 ---

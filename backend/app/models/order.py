@@ -10,7 +10,7 @@ class OrderStatus(str, enum.Enum):
     cutting = "cutting"
     drilling = "drilling"
     assembling = "assembling"
-    quality_check = "quality_check"
+    pending_nachalnik = "pending_nachalnik"
     ready = "ready"
     delivered = "delivered"
     cancelled = "cancelled"
@@ -27,11 +27,21 @@ class Order(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    nachalnik_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    nachalnik_confirmed_at = Column(DateTime, nullable=True)
 
     client = relationship("Client", backref="orders")
-    creator = relationship("User", backref="created_orders")
+    creator = relationship("User", foreign_keys=[created_by], backref="created_orders")
+    nachalnik = relationship("User", foreign_keys=[nachalnik_id])
     detail = relationship("OrderDetail", back_populates="order", uselist=False)
     stages = relationship("OrderStage", back_populates="order", order_by="OrderStage.id")
+
+    @property
+    def active_stage_status(self):
+        for s in (self.stages or []):
+            if s.status == 'pending_brigadir':
+                return 'pending_brigadir'
+        return None
 
 
 class OrderDetail(Base):

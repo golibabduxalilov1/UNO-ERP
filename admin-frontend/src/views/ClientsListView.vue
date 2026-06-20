@@ -16,7 +16,7 @@
 
     <!-- Search -->
     <div class="card p-4">
-      <div class="relative max-w-xs">
+      <div class="relative w-full">
         <AppIcon name="search" :size="17" class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-4 pointer-events-none" />
         <input v-model="search" @input="debouncedFetch" class="input pl-9" placeholder="Ism yoki telefon..." />
       </div>
@@ -69,7 +69,7 @@
               <td class="tbl-td font-mono text-ink-4 text-[12px] tabular-nums">{{ formatDate(c.created_at) }}</td>
               <td class="tbl-td text-right">
                 <div class="flex items-center justify-end gap-1">
-                  <button @click="openModal(c)" class="btn-icon" title="Tahrirlash">
+                  <button @click="openModal(c)" class="btn-icon btn-icon--warning" title="Tahrirlash">
                     <AppIcon name="edit" :size="17" />
                   </button>
                   <button @click="confirmDelete(c)"
@@ -177,6 +177,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { clientsApi } from '@/api'
 import AppIcon from '@/components/AppIcon.vue'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const clients     = ref([])
 const loading     = ref(false)
@@ -197,8 +200,10 @@ async function doDelete() {
     await clientsApi.delete(deleteTarget.value.id)
     deleteTarget.value = null
     fetchClients()
+    toast.success("Mijoz o'chirildi")
   } catch (e) {
     deleteError.value = e.response?.data?.detail || 'Xatolik yuz berdi'
+    toast.error(deleteError.value)
   } finally { deleting.value = false }
 }
 
@@ -228,6 +233,7 @@ async function saveClient() {
       : await clientsApi.create({ name: form.name, phone: form.phone, address: form.address||null })
     showModal.value = false
     fetchClients()
+    toast.success(editing.value ? "Mijoz yangilandi" : "Mijoz qo'shildi")
   } catch (e) {
     formError.value = e.response?.data?.detail || 'Xatolik'
   } finally { saving.value = false }

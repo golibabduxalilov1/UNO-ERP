@@ -36,7 +36,7 @@ def brigadir_main_kb() -> ReplyKeyboardMarkup:
 def nachalnik_main_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="✅ Brigadir tasdiqlaganlari")],
+            [KeyboardButton(text="✅ Yakuniy tasdiq")],
             [KeyboardButton(text="📊 Oylik hisobot")],
             [KeyboardButton(text="ℹ️ Mening ma'lumotlarim")],
         ],
@@ -44,7 +44,7 @@ def nachalnik_main_kb() -> ReplyKeyboardMarkup:
     )
 
 
-def manager_main_kb() -> ReplyKeyboardMarkup:
+def admin_main_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="➕ Yangi buyurtma")],

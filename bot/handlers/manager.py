@@ -13,7 +13,7 @@ ORDER_STATUSES = {
     "cutting": "✂️ Kesishda",
     "drilling": "🔩 Teshishda",
     "assembling": "🔧 Yig'ishda",
-    "quality_check": "🔍 Sifat nazoratida",
+    "pending_nachalnik": "⏳ Nachalnik tasdiqida",
     "ready": "✅ Tayyor",
     "delivered": "🚚 Yetkazildi",
     "cancelled": "❌ Bekor qilingan",
@@ -71,7 +71,7 @@ async def order_history_search(message: Message, state: FSMContext):
             f"Material: {detail.get('material', '?')}",
             f"\n<b>Bosqichlar tarixi:</b>",
         ]
-        STAGE_LABELS = {"cutting": "Kesish", "drilling": "Teshish", "assembling": "Yig'ish", "quality_check": "Sifat"}
+        STAGE_LABELS = {"cutting": "Kesish", "drilling": "Teshish", "assembling": "Yig'ish"}
         for s in stages:
             worker = s.get("worker") or {}
             stage_label = STAGE_LABELS.get(s.get("stage", ""), s.get("stage", ""))

@@ -12,7 +12,7 @@ import {
   ShoppingCart, PackageX, ClipboardList, PieChart, FileText, Receipt,
   User, Phone, Lock, Calendar, CalendarDays, AlarmClock, GitBranch,
   Truck, ChevronDown, ChevronLeft, ChevronRight, Armchair, Save,
-  Check, Play, Hourglass, Info, Circle, FileBarChart2,
+  Check, Play, Hourglass, Info, Circle, FileBarChart2, Trash2,
 } from 'lucide-vue-next'
 
 const MAP = {
@@ -73,6 +73,7 @@ const MAP = {
   hourglass_empty:    Hourglass,
   info:               Info,
   circle:             Circle,
+  delete:             Trash2,
 }
 
 const props = defineProps({

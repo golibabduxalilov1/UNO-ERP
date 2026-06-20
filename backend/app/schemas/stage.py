@@ -16,7 +16,3 @@ class StageFinish(BaseModel):
 
 class BrigadirAction(BaseModel):
     reject_reason: Optional[str] = None
-
-
-class NachalnikAction(BaseModel):
-    reject_reason: Optional[str] = None

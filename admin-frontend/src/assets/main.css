@@ -170,6 +170,8 @@
     flex-shrink: 0;
   }
   .btn-icon:hover { background: #EFF4FF; color: #366EF9; border-color: #C4D8FD; }
+  .btn-icon--warning { border-color: #FDE68A; color: #D97706; background: #FFFBEB; }
+  .btn-icon--warning:hover { background: #FEF3C7; color: #B45309; border-color: #FCD34D; }
 
   /* ══ INPUTS ══ */
   .input {

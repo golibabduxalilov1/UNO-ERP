@@ -10,7 +10,7 @@ from app.services.audit_service import log_action
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-ADMIN_ROLES = [UserRole.admin, UserRole.manager]
+ADMIN_ROLES = [UserRole.admin]
 
 
 @router.get("", response_model=List[UserOut])
@@ -78,8 +78,10 @@ def update_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+    first_admin = db.query(User).filter(User.role == UserRole.admin).order_by(User.id).first()
+    if first_admin and user.id == first_admin.id and data.role is not None and data.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Birinchi administrator roli o'zgartirib bo'lmaydi")
     if user.role == UserRole.admin and user.id != current_user.id:
-        first_admin = db.query(User).filter(User.role == UserRole.admin).order_by(User.id).first()
         if not first_admin or current_user.id != first_admin.id:
             raise HTTPException(status_code=403, detail="Faqat birinchi administrator boshqa adminlarni o'zgartira oladi")
     if data.full_name is not None:

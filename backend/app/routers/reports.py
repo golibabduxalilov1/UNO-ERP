@@ -12,7 +12,7 @@ from app.core.deps import require_roles
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
-REPORT_ROLES = [UserRole.admin, UserRole.manager, UserRole.nachalnik, UserRole.director]
+REPORT_ROLES = [UserRole.admin, UserRole.nachalnik, UserRole.director]
 
 
 @router.get("/monthly")
@@ -28,9 +28,9 @@ def monthly_report(
         .join(User, OrderStage.user_id == User.id)
         .filter(
             OrderStage.status == StageStatus.confirmed,
-            OrderStage.nachalnik_confirmed_at != None,
-            extract("year", OrderStage.nachalnik_confirmed_at) == year,
-            extract("month", OrderStage.nachalnik_confirmed_at) == month,
+            OrderStage.brigadir_confirmed_at != None,
+            extract("year", OrderStage.brigadir_confirmed_at) == year,
+            extract("month", OrderStage.brigadir_confirmed_at) == month,
         )
     )
     if user_id:
@@ -127,7 +127,7 @@ def order_history(
         raise HTTPException(status_code=404, detail="Buyurtma topilmadi")
     stages = (
         db.query(OrderStage)
-        .options(joinedload(OrderStage.worker), joinedload(OrderStage.brigadir), joinedload(OrderStage.nachalnik))
+        .options(joinedload(OrderStage.worker), joinedload(OrderStage.brigadir))
         .filter(OrderStage.order_id == order.id)
         .order_by(OrderStage.started_at)
         .all()
@@ -145,16 +145,16 @@ def order_history(
             "brigadir_name": s.brigadir.full_name if s.brigadir else None,
             "brigadir_confirmed_at": s.brigadir_confirmed_at,
             "brigadir_reject_reason": s.brigadir_reject_reason,
-            "nachalnik_name": s.nachalnik.full_name if s.nachalnik else None,
-            "nachalnik_confirmed_at": s.nachalnik_confirmed_at,
-            "nachalnik_reject_reason": s.nachalnik_reject_reason,
         })
+    nachalnik_user = db.query(User).filter(User.id == order.nachalnik_id).first() if order.nachalnik_id else None
     return {
         "order_no": order.order_no,
         "status": order.status,
         "created_at": order.created_at,
         "created_by": creator.full_name if creator else None,
         "deadline": str(order.deadline) if order.deadline else None,
+        "nachalnik_name": nachalnik_user.full_name if nachalnik_user else None,
+        "nachalnik_confirmed_at": order.nachalnik_confirmed_at,
         "stages": stage_list,
         "delivery": {
             "driver_name": delivery.driver.full_name if delivery and delivery.driver else None,
